@@ -73,6 +73,9 @@ class MongoDBAtlasSearchIntegrationTest {
         
         // Create test data with various recommendation titles for search testing
         createTestRecommendations();
+        
+        // Wait for Atlas Search index to be ready and data to be indexed
+        waitForSearchIndexReady();
     }
 
     @Test
@@ -349,6 +352,23 @@ class MongoDBAtlasSearchIntegrationTest {
     }
 
     // Helper Methods
+
+    private void waitForSearchIndexReady() {
+        try {
+            // Wait for Atlas Search index to process the inserted data
+            // Atlas Search needs time to index the documents
+            System.out.println("Waiting for Atlas Search index to process data...");
+            Thread.sleep(5000); // 5 seconds wait
+            
+            // Verify some basic data exists
+            long count = mongoTemplate.getCollection("arcRecommendation").countDocuments();
+            System.out.println("Total documents in collection: " + count);
+            
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            System.err.println("Wait interrupted: " + e.getMessage());
+        }
+    }
 
     private void createAtlasSearchIndex() {
         try {
