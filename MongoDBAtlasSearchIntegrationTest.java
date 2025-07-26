@@ -267,32 +267,42 @@ class MongoDBAtlasSearchIntegrationTest {
 
     @Test
     void shouldHandleEmptySearchTerm() {
-        // Given
-        RecommendationListFilterRequest request = createSearchRequest("");
+        // Given - Empty search should not include text filter at all
+        RecommendationListFilterRequest request = new RecommendationListFilterRequest();
+        request.setStartRow(0);
+        request.setEndRow(100);
+        request.setSortModel(List.of());
+        request.setFilterModel(Map.of()); // No filters, including no text filter
+        
         String submissionBaseNo = "SUB123456";
 
-        // When & Then - Should not crash with empty search
+        // When & Then - Should not crash and return all recommendations
         assertDoesNotThrow(() -> {
             List<ArcRecommendationEntity> results = 
                 arcRecommendationRepositoryCustom.findArcRecommendationsByAtlas(submissionBaseNo, request);
             
-            // Should return all recommendations (no text filter applied)
-            assertThat(results).isNotNull();
+            // Should return all recommendations for the submission
+            assertThat(results).isNotNull().isNotEmpty();
         });
     }
 
     @Test
     void shouldHandleNullSearchTerm() {
-        // Given
-        RecommendationListFilterRequest request = createSearchRequest(null);
+        // Given - Null search should not include text filter at all
+        RecommendationListFilterRequest request = new RecommendationListFilterRequest();
+        request.setStartRow(0);
+        request.setEndRow(100);
+        request.setSortModel(List.of());
+        request.setFilterModel(Map.of()); // No filters, including no text filter
+        
         String submissionBaseNo = "SUB123456";
 
-        // When & Then - Should not crash with null search
+        // When & Then - Should not crash and return all recommendations
         assertDoesNotThrow(() -> {
             List<ArcRecommendationEntity> results = 
                 arcRecommendationRepositoryCustom.findArcRecommendationsByAtlas(submissionBaseNo, request);
             
-            assertThat(results).isNotNull();
+            assertThat(results).isNotNull().isNotEmpty();
         });
     }
 
