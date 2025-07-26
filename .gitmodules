@@ -1,0 +1,13 @@
+[submodule "agcs-service-riskassessment-common-library"]
+	path = agcs-service-riskassessment-common-library
+	url = https://github.com/toojannarong/agcs-service-riskassessment-common-library.git
+	branch = main
+[submodule "agcs-library-common"]
+	path = agcs-library-common
+	url = https://github.com/toojannarong/agcs-library-common.git
+[submodule "agcs-library-security"]
+	path = agcs-library-security
+	url = https://github.com/toojannarong/agcs-library-security.git
+[submodule "agcs-library-kafka"]
+	path = agcs-library-kafka
+	url = https://github.com/toojannarong/agcs-library-kafka.git
