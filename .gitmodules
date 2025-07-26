@@ -14,3 +14,4 @@
 [submodule "agcs-service-riskassessment"]
 	path = agcs-service-riskassessment
 	url = https://github.com/toojannarong/agcs-service-riskassessment.git
+	branch = merge_rec_main_detail
