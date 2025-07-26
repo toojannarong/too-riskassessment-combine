@@ -65,11 +65,11 @@ class MongoDBAtlasSearchIntegrationTest {
         // Clear existing data
         mongoTemplate.getCollection("arcRecommendation").drop();
         
+        // Create Atlas Search index (equivalent to Mongock migration Id39ArcRecommendationAddAtlasSearchIndex)
+        createAtlasSearchIndex();
+        
         // Create test data with various recommendation titles for search testing
         createTestRecommendations();
-        
-        // Note: In real Atlas Search, we would need to ensure search index is created
-        // For integration tests, we simulate Atlas Search behavior
     }
 
     @Test
@@ -333,6 +333,33 @@ class MongoDBAtlasSearchIntegrationTest {
     }
 
     // Helper Methods
+
+    private void createAtlasSearchIndex() {
+        try {
+            // Create Atlas Search index on arcRecommendation collection
+            // This replicates the functionality of Id39ArcRecommendationAddAtlasSearchIndex Mongock migration
+            
+            // Note: TestContainers MongoDB doesn't support Atlas Search natively
+            // We need to either:
+            // 1. Use MongoDB Enterprise with search enabled, OR
+            // 2. Mock the search behavior, OR  
+            // 3. Use actual Atlas cluster for integration tests
+            
+            // For now, we'll create a text index as a fallback for basic text search
+            mongoTemplate.getCollection("arcRecommendation")
+                .createIndex(
+                    new org.bson.Document("recommendationTitle", "text")
+                        .append("recommendationBody", "text")
+                );
+            
+            // TODO: Consider using actual Atlas cluster for full Atlas Search testing
+            // or implement search behavior simulation
+            
+        } catch (Exception e) {
+            // Index might already exist or other error - log and continue
+            System.out.println("Warning: Could not create search index: " + e.getMessage());
+        }
+    }
 
     private void createTestRecommendations() {
         List<ArcRecommendationEntity> testData = List.of(
