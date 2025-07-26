@@ -13,9 +13,10 @@ import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.MongoDBContainer;
+import org.testcontainers.containers.MongoDBAtlasLocalContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.utility.DockerImageName;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -45,8 +46,9 @@ import static org.junit.jupiter.api.Assertions.*;
 class MongoDBAtlasSearchIntegrationTest {
 
     @Container
-    static MongoDBContainer mongoContainer = new MongoDBContainer("mongo:6.0")
-            .withExposedPorts(27017);
+    static MongoDBAtlasLocalContainer mongoContainer = new MongoDBAtlasLocalContainer(
+            DockerImageName.parse("mongodb/mongodb-atlas-local:7.0.9")
+    );
 
     @Autowired
     private MongoTemplate mongoTemplate;
@@ -56,7 +58,7 @@ class MongoDBAtlasSearchIntegrationTest {
 
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.data.mongodb.uri", mongoContainer::getReplicaSetUrl);
+        registry.add("spring.data.mongodb.uri", mongoContainer::getConnectionString);
         registry.add("spring.data.mongodb.database", () -> "test_recommendations");
     }
 
@@ -337,27 +339,55 @@ class MongoDBAtlasSearchIntegrationTest {
     private void createAtlasSearchIndex() {
         try {
             // Create Atlas Search index on arcRecommendation collection
-            // This replicates the functionality of Id39ArcRecommendationAddAtlasSearchIndex Mongock migration
+            // This replicates the exact functionality of Id39ArcRecommendationAddAtlasSearchIndex Mongock migration
             
-            // Note: TestContainers MongoDB doesn't support Atlas Search natively
-            // We need to either:
-            // 1. Use MongoDB Enterprise with search enabled, OR
-            // 2. Mock the search behavior, OR  
-            // 3. Use actual Atlas cluster for integration tests
+            org.bson.Document searchIndexCommand = new org.bson.Document("createSearchIndexes", "arcRecommendation")
+                .append("indexes", List.of(
+                    new org.bson.Document("name", "default")
+                        .append("definition", new org.bson.Document("mappings", new org.bson.Document("dynamic", false)
+                            .append("fields", new org.bson.Document()
+                                .append("submissionBaseNr", new org.bson.Document("type", "string"))
+                                .append("dueDate", new org.bson.Document("type", "date"))
+                                .append("objectId", List.of(
+                                    new org.bson.Document("type", "autocomplete")
+                                        .append("tokenization", "nGram")
+                                        .append("minGrams", 1)
+                                        .append("maxGrams", 25),
+                                    new org.bson.Document("type", "string")
+                                ))
+                                .append("objectName", List.of(
+                                    new org.bson.Document("type", "autocomplete")
+                                        .append("tokenization", "nGram")
+                                        .append("minGrams", 1),
+                                    new org.bson.Document("type", "string")
+                                ))
+                                .append("recommendationCategory", new org.bson.Document("type", "token"))
+                                .append("recommendationCompletedDate", new org.bson.Document("type", "date"))
+                                .append("recommendationPriority", new org.bson.Document("type", "token"))
+                                .append("recommendationStatus", new org.bson.Document("type", "token"))
+                                .append("recommendationTitle", List.of(
+                                    new org.bson.Document("type", "autocomplete")
+                                        .append("tokenization", "nGram")
+                                        .append("minGrams", 1),
+                                    new org.bson.Document("type", "string")
+                                ))
+                                .append("recommendationType", new org.bson.Document("type", "token"))
+                            )
+                        ))
+                ));
+
+            // Execute the search index creation command
+            mongoTemplate.getDb().runCommand(searchIndexCommand);
             
-            // For now, we'll create a text index as a fallback for basic text search
-            mongoTemplate.getCollection("arcRecommendation")
-                .createIndex(
-                    new org.bson.Document("recommendationTitle", "text")
-                        .append("recommendationBody", "text")
-                );
+            // Wait a moment for index to be created
+            Thread.sleep(2000);
             
-            // TODO: Consider using actual Atlas cluster for full Atlas Search testing
-            // or implement search behavior simulation
+            System.out.println("Successfully created Atlas Search index for arcRecommendation collection");
             
         } catch (Exception e) {
             // Index might already exist or other error - log and continue
-            System.out.println("Warning: Could not create search index: " + e.getMessage());
+            System.err.println("Warning: Could not create Atlas Search index: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 

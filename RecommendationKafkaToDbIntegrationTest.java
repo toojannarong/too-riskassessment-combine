@@ -18,9 +18,10 @@ import org.springframework.kafka.test.EmbeddedKafkaBroker;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.MongoDBContainer;
+import org.testcontainers.containers.MongoDBAtlasLocalContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.utility.DockerImageName;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -54,8 +55,9 @@ import static org.awaitility.Awaitility.await;
 class RecommendationKafkaToDbIntegrationTest {
 
     @Container
-    static MongoDBContainer mongoContainer = new MongoDBContainer("mongo:6.0")
-            .withExposedPorts(27017);
+    static MongoDBAtlasLocalContainer mongoContainer = new MongoDBAtlasLocalContainer(
+            DockerImageName.parse("mongodb/mongodb-atlas-local:7.0.9")
+    );
 
     @Autowired
     private EmbeddedKafkaBroker embeddedKafkaBroker;
@@ -76,7 +78,7 @@ class RecommendationKafkaToDbIntegrationTest {
 
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.data.mongodb.uri", mongoContainer::getReplicaSetUrl);
+        registry.add("spring.data.mongodb.uri", mongoContainer::getConnectionString);
         registry.add("spring.data.mongodb.database", () -> "test_recommendations");
         registry.add("spring.kafka.bootstrap-servers", () -> "localhost:9092");
         registry.add("spring.kafka.consumer.group-id", () -> "test-group");
