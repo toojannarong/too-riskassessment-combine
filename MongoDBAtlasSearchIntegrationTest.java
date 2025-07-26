@@ -2,6 +2,7 @@ package com.allianz.agcs.riskassessment.repositories;
 
 import com.allianz.agcs.riskassessment.models.rest.request.RecommendationListFilterRequest;
 import com.allianz.agcs.riskassessment.models.rest.request.aggrid.FilterItemRequest;
+import com.allianz.agcs.riskassessment.types.FilterOperatorType;
 import com.allianz.agcs.riskassessment.types.FilterType;
 import com.allianz.agcs.riskassessment.types.RecommendationListFilterField;
 import com.allianz.agcs.riskassessmentcommon.models.entities.recomendation.ArcRecommendationEntity;
@@ -189,14 +190,17 @@ class MongoDBAtlasSearchIntegrationTest {
         request.setSortModel(List.of());
         
         // Text filter for "fire"
-        FilterItemRequest textFilter = new FilterItemRequest();
-        textFilter.setFilterType(FilterType.TEXT);
-        textFilter.setFilter("fire");
+        FilterItemRequest textFilter = FilterItemRequest.builder()
+            .filterType(FilterType.TEXT)
+            .type(FilterOperatorType.CONTAINS)
+            .filter("fire")
+            .build();
         
         // Status filter for "OPEN"
-        FilterItemRequest statusFilter = new FilterItemRequest();
-        statusFilter.setFilterType(FilterType.SET);
-        statusFilter.setValues(List.of("OPEN"));
+        FilterItemRequest statusFilter = FilterItemRequest.builder()
+            .filterType(FilterType.SET)
+            .values(List.of("OPEN"))
+            .build();
         
         request.setFilterModel(Map.of(
             RecommendationListFilterField.RECOMMENDATION_TITLE, textFilter,
@@ -435,9 +439,11 @@ class MongoDBAtlasSearchIntegrationTest {
         request.setSortModel(List.of());
         
         if (searchTerm != null) {
-            FilterItemRequest textFilter = new FilterItemRequest();
-            textFilter.setFilterType(FilterType.TEXT);
-            textFilter.setFilter(searchTerm);
+            FilterItemRequest textFilter = FilterItemRequest.builder()
+                .filterType(FilterType.TEXT)
+                .type(FilterOperatorType.CONTAINS) // This was missing!
+                .filter(searchTerm)
+                .build();
             
             request.setFilterModel(Map.of(
                 RecommendationListFilterField.RECOMMENDATION_TITLE, textFilter

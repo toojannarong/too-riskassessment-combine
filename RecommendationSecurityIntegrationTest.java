@@ -3,6 +3,7 @@ package com.allianz.agcs.riskassessment.security;
 import com.allianz.agcs.riskassessment.models.rest.request.RecommendationListFilterRequest;
 import com.allianz.agcs.riskassessment.models.rest.request.aggrid.FilterItemRequest;
 import com.allianz.agcs.riskassessment.models.rest.responses.SearchRecommendationResponse;
+import com.allianz.agcs.riskassessment.types.FilterOperatorType;
 import com.allianz.agcs.riskassessment.types.FilterType;
 import com.allianz.agcs.riskassessment.types.RecommendationListFilterField;
 import com.allianz.agcs.riskassessmentcommon.models.entities.recomendation.ArcRecommendationEntity;
@@ -180,9 +181,11 @@ class RecommendationSecurityIntegrationTest {
     @Test
     void shouldPreventNoSQLInjectionInTextFilters() {
         // Given - Request with potential NoSQL injection in text filter
-        FilterItemRequest textFilter = new FilterItemRequest();
-        textFilter.setFilterType(FilterType.TEXT);
-        textFilter.setFilter("'; DROP TABLE recommendations; --");
+        FilterItemRequest textFilter = FilterItemRequest.builder()
+            .filterType(FilterType.TEXT)
+            .type(FilterOperatorType.CONTAINS)
+            .filter("'; DROP TABLE recommendations; --")
+            .build();
 
         RecommendationListFilterRequest request = new RecommendationListFilterRequest();
         request.setStartRow(0);
@@ -222,9 +225,11 @@ class RecommendationSecurityIntegrationTest {
         };
 
         for (String maliciousInput : maliciousInputs) {
-            FilterItemRequest textFilter = new FilterItemRequest();
-            textFilter.setFilterType(FilterType.TEXT);
-            textFilter.setFilter(maliciousInput);
+            FilterItemRequest textFilter = FilterItemRequest.builder()
+                .filterType(FilterType.TEXT)
+                .type(FilterOperatorType.CONTAINS)
+                .filter(maliciousInput)
+                .build();
 
             RecommendationListFilterRequest request = new RecommendationListFilterRequest();
             request.setStartRow(0);

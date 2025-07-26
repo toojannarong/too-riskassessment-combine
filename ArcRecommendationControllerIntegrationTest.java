@@ -4,6 +4,7 @@ import com.allianz.agcs.riskassessment.models.rest.request.RecommendationListFil
 import com.allianz.agcs.riskassessment.models.rest.request.aggrid.FilterItemRequest;
 import com.allianz.agcs.riskassessment.models.rest.responses.GetRecommendationDetailResponse;
 import com.allianz.agcs.riskassessment.models.rest.responses.SearchRecommendationResponse;
+import com.allianz.agcs.riskassessment.types.FilterOperatorType;
 import com.allianz.agcs.riskassessment.types.FilterType;
 import com.allianz.agcs.riskassessment.types.RecommendationListFilterField;
 import com.allianz.agcs.riskassessmentcommon.models.entities.recomendation.ArcRecommendationEntity;
@@ -140,9 +141,11 @@ class ArcRecommendationControllerIntegrationTest {
     @Test
     void shouldFilterRecommendationsByTextSearch() {
         // Given
-        FilterItemRequest textFilter = new FilterItemRequest();
-        textFilter.setFilterType(FilterType.TEXT);
-        textFilter.setFilter("Fire Safety");
+        FilterItemRequest textFilter = FilterItemRequest.builder()
+            .filterType(FilterType.TEXT)
+            .type(FilterOperatorType.CONTAINS)
+            .filter("Fire Safety")
+            .build();
 
         RecommendationListFilterRequest request = new RecommendationListFilterRequest();
         request.setStartRow(0);
@@ -177,9 +180,10 @@ class ArcRecommendationControllerIntegrationTest {
     @Test
     void shouldFilterRecommendationsByStatus() {
         // Given
-        FilterItemRequest statusFilter = new FilterItemRequest();
-        statusFilter.setFilterType(FilterType.SET);
-        statusFilter.setValues(List.of("OPEN"));
+        FilterItemRequest statusFilter = FilterItemRequest.builder()
+            .filterType(FilterType.SET)
+            .values(List.of("OPEN"))
+            .build();
 
         RecommendationListFilterRequest request = new RecommendationListFilterRequest();
         request.setStartRow(0);
@@ -370,9 +374,11 @@ class ArcRecommendationControllerIntegrationTest {
     @Test
     void shouldHandleSpecialCharactersInSearchCorrectly() {
         // Given
-        FilterItemRequest textFilter = new FilterItemRequest();
-        textFilter.setFilterType(FilterType.TEXT);
-        textFilter.setFilter("Fire & Safety (100%)");
+        FilterItemRequest textFilter = FilterItemRequest.builder()
+            .filterType(FilterType.TEXT)
+            .type(FilterOperatorType.CONTAINS)
+            .filter("Fire & Safety (100%)")
+            .build();
 
         RecommendationListFilterRequest request = new RecommendationListFilterRequest();
         request.setStartRow(0);
