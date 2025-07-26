@@ -11,3 +11,6 @@
 [submodule "agcs-library-kafka"]
 	path = agcs-library-kafka
 	url = https://github.com/toojannarong/agcs-library-kafka.git
+[submodule "agcs-service-riskassessment"]
+	path = agcs-service-riskassessment
+	url = https://github.com/toojannarong/agcs-service-riskassessment.git
