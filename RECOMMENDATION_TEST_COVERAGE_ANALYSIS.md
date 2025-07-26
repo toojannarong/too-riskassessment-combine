@@ -16,7 +16,25 @@ This document analyzes the current test coverage for the recommendation features
 
 ## 1. Integration Tests (Backend)
 
-### A. Repository Integration Tests - **MISSING**
+### A. MongoDB Atlas Search Integration Tests - **CRITICAL MISSING**
+```java
+@DataMongoTest
+@TestPropertySource(properties = "spring.data.mongodb.database=test_recommendations")
+class MongoDBAtlasSearchIntegrationTest {
+    // Test Atlas Search index creation and management
+    // Test text search queries with various search terms
+    // Test search scoring and relevance ranking
+    // Test search performance with large datasets
+    // Test search with special characters and unicode
+    // Test search index updates and synchronization
+    // Test search query optimization
+    // Test combined Atlas Search with aggregation pipeline
+}
+```
+
+**⚠️ CRITICAL:** This is the ONLY feature using MongoDB Atlas Search in the entire application, yet there are NO tests covering this functionality. Atlas Search behavior differs significantly from standard MongoDB queries and requires specialized testing.
+
+### B. Repository Integration Tests - **MISSING**
 ```java
 @DataMongoTest
 class ArcRecommendationRepositoryIntegrationTest {
@@ -24,10 +42,19 @@ class ArcRecommendationRepositoryIntegrationTest {
     // Test complex filter combinations
     // Test pagination with large datasets
     // Test performance with realistic data volumes
+    // Test MongoDB Atlas Search functionality specifically
 }
 ```
 
 **Why Critical:** Current tests only mock the repository layer. Real MongoDB integration tests would catch aggregation pipeline issues, index performance problems, and data consistency issues.
+
+**⚠️ CRITICAL MISSING: MongoDB Atlas Search Testing**
+The `/api/arcRecommendation/list` endpoint is the **ONLY** endpoint using MongoDB Atlas Search feature, but there are **NO TESTS** covering:
+- Atlas Search index functionality
+- Text search queries and scoring
+- Search result relevance
+- Atlas Search performance
+- Search index management and updates
 
 ### B. API Integration Tests - **MISSING**
 ```java
@@ -241,19 +268,25 @@ class RecommendationFinancialTest {
 ## Test Implementation Priority
 
 ### 🔴 High Priority (Must Have)
-1. **Repository integration tests with real MongoDB**
+1. **MongoDB Atlas Search integration tests** ⚠️ **CRITICAL**
+   - ONLY endpoint using Atlas Search - no current test coverage
+   - Text search functionality is core to user experience
+   - Atlas Search behaves differently from standard MongoDB queries
+   - Search index management and performance validation needed
+   
+2. **Repository integration tests with real MongoDB**
    - Critical for catching aggregation pipeline issues
    - Validates index performance and query optimization
    
-2. **API integration tests with full HTTP stack**
+3. **API integration tests with full HTTP stack**
    - Ensures complete request/response cycle works
    - Validates authorization and error handling
    
-3. **End-to-end Kafka to database flow**
+4. **End-to-end Kafka to database flow**
    - Critical data entry point for recommendations
    - Ensures event processing reliability
    
-4. **Security tests for authorization**
+5. **Security tests for authorization**
    - Prevents data leakage between submissions
    - Validates access control mechanisms
 
@@ -308,19 +341,58 @@ class RecommendationEndToEndIntegrationTest {
             .extracting("recommendationId")
             .contains("TEST_REC_001");
         
-        // 4. Call detail API and verify complete data
+        // 4. Test Atlas Search functionality specifically
+        ResponseEntity<SearchRecommendationResponse> textSearchResponse = 
+            restTemplate.postForEntity("/api/arcRecommendation/list", 
+                createTextSearchRequest("Fire Safety"), SearchRecommendationResponse.class);
+        
+        assertThat(textSearchResponse.getBody().getRows())
+            .isNotEmpty()
+            .allMatch(rec -> rec.getRecommendationTitle().toLowerCase()
+                .contains("fire") || rec.getRecommendationTitle().toLowerCase()
+                .contains("safety"));
+        
+        // 5. Call detail API and verify complete data
         ResponseEntity<GetRecommendationDetailResponse> detailResponse = 
             restTemplate.getForEntity("/api/arcRecommendation/TEST_REC_001", 
                 GetRecommendationDetailResponse.class);
         
-        // 5. Verify data consistency across all endpoints
+        // 6. Verify data consistency across all endpoints
         assertThat(detailResponse.getBody().recommendationId())
             .isEqualTo("TEST_REC_001");
+    }
+    
+    @Test
+    void shouldHandleAtlasSearchWithSpecialCharacters() {
+        // Test Atlas Search with special characters and unicode
+        ResponseEntity<SearchRecommendationResponse> searchResponse = 
+            restTemplate.postForEntity("/api/arcRecommendation/list", 
+                createTextSearchRequest("Björk's café & grill"), 
+                SearchRecommendationResponse.class);
+        
+        // Should not throw errors and return appropriate results
+        assertThat(searchResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
 }
 ```
 
 ## Specific Test Scenarios to Add
+
+### MongoDB Atlas Search Tests ⚠️ **CRITICAL MISSING**
+- [ ] Test Atlas Search index exists and is properly configured
+- [ ] Test text search functionality in recommendation titles
+- [ ] Test search ranking and relevance scoring
+- [ ] Test search with partial words and typos
+- [ ] Test search with special characters (!@#$%^&*)
+- [ ] Test search with unicode characters (ñ, ü, é, etc.)
+- [ ] Test search performance with large datasets (10k+ records)
+- [ ] Test empty search results handling
+- [ ] Test search combined with other filters (date, status, etc.)
+- [ ] Test search query optimization and explain plans
+- [ ] Test Atlas Search index updates when data changes
+- [ ] Test search highlighting and snippets
+- [ ] Test search autocompletion capabilities
+- [ ] Test search with stop words and stemming
 
 ### Backend API Tests
 - [ ] Test search with all filter combinations
