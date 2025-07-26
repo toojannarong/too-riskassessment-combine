@@ -13,5 +13,5 @@
 	url = https://github.com/toojannarong/agcs-library-kafka.git
 [submodule "agcs-service-riskassessment"]
 	path = agcs-service-riskassessment
-	url = /Users/jannarongwadthong/Downloads/too-agcs-service-riskassessment
+	url = https://github.com/toojannarong/too-agcs-service-riskassessment.git
 	branch = merge_rec_main_detail
